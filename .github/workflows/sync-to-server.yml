@@ -1,0 +1,30 @@
+name: Copy files to server
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'home/**'
+
+jobs:
+  copy-to-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. 安装 SSH 客户端
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh/
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      # 3. 使用 scp 复制多个文件和文件夹
+      - name: Copy files and folders to server
+        run: |
+          scp -r -o StrictHostKeyChecking=no home/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:${{ secrets.SERVER_PATH }}
